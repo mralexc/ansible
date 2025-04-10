@@ -6,10 +6,18 @@
   register: cert_exists_locally
   delegate_to: localhost
 
+# The changed_when seems odd, but in practice, the rc is always 0 except when the file
+# exists locally and you are prompted to replace a file. This only will occur if using 
+# debugging, since the conditional should prevent this from running if a cert is already
+# in the local output directory. When a request does happen and the changed_when is set
+# to "certreq_result == 0", an "ok" is shown by ansible. When "certreq_result != 0" is set
+# then the ansible output shows "changed" with the successful request. This is the desired
+# "look" since something is actually changing.
 - name: Submit CSR to Windows CA via certreq (run on control node)
   ansible.builtin.command:
     chdir: "{{ ssl_renewal_check_local_output_dir }}"
     cmd: "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"certreq -submit -config '{{ ssl_renewal_check_ca_config }}' -attrib 'CertificateTemplate:{{ ssl_renewal_check_cert_template }}' '{{ ssl_renewal_check_local_csr }}' '{{ ssl_renewal_check_local_cer }}'\"" # noqa yaml[line-length]
   register: certreq_result
   when: not cert_exists_locally.stat.exists
+  changed_when: certreq_result != 0
   delegate_to: localhost
