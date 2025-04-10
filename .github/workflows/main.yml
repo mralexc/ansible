@@ -32,7 +32,7 @@ jobs:
 
       - name: Run ansible-lint on changed files
         run: |
-          if [ "${{ github.event_name }}" "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -E '\.ya?ml$')
           else
             CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep -E '\.ya?ml$')
