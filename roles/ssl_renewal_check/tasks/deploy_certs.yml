@@ -1,0 +1,18 @@
+---
+- name: Gather remote host facts again
+  ansible.builtin.setup:
+
+- name: Copy certificate to remote host
+  ansible.builtin.copy:
+    src: "{{ ssl_renewal_check_local_output_dir }}/{{ ssl_renewal_check_local_cer }}"
+    dest: "{{ ssl_renewal_check_remote_cert_file }}"
+    backup: true
+    mode: '0644'
+  become: true
+
+- name: Create symlink for localhost.crt
+  ansible.builtin.file:
+    src: "{{ ssl_renewal_check_remote_cert_file }}"
+    dest: "{{ ssl_renewal_check_remote_cert_dir }}/localhost.crt"
+    state: link
+  become: true

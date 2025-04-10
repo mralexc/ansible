@@ -1,0 +1,84 @@
+---
+- name: Gather remote host facts
+  ansible.builtin.setup:
+
+- name: Ensure python3-cryptography is installed for SSL operations
+  ansible.builtin.package:
+    name: python3-cryptography
+    state: present
+  become: true
+
+- name: Check if existing certificate exists on remote host
+  ansible.builtin.stat:
+    path: "{{ ssl_renewal_check_remote_cert_file }}"
+  register: cert_stat
+
+- name: Check remote SSL certificate for validity, exit if renewal isn't needed
+  when: cert_stat.stat.exists
+  block:
+    - name: Check if SSL Certificate is valid 90 days from now
+      community.crypto.x509_certificate_info:
+        path: "{{ ssl_renewal_check_remote_cert_file }}"
+        valid_at:
+          point_1: "+90d"
+      register: expiration_result
+  
+    - name: Check if SSL certificate is linked to localhost.crt on remote host
+      ansible.builtin.file:
+        src: "{{ ssl_renewal_check_remote_cert_file }}"
+        dest: "{{ ssl_renewal_check_remote_cert_dir }}/localhost.crt"
+        state: link
+      become: true
+
+    - name: End for host if certificate is valid longer than 90 days from now
+      ansible.builtin.meta: end_host
+      when: expiration_result.valid_at.point_1 | bool
+
+- name: Create host specific output directories on local WSL machine
+  ansible.builtin.file:
+    path: "{{ ssl_renewal_check_local_output_dir }}/{{ ansible_hostname }}"
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+
+- name: Check if SSL key exists
+  ansible.builtin.stat:
+    path: "{{ ssl_renewal_check_remote_key_file }}"
+  register: key_check
+
+- name: Generate new SSL key if it doesn't exist
+  when: not key_check.stat.exists
+  become: true
+  block:
+    - name: Create new private key
+      community.crypto.openssl_privatekey:
+        path: "{{ ssl_renewal_check_remote_key_file }}"
+        size: 4096
+        mode: '0600'
+
+    - name: Create symlink for localhost.key
+      ansible.builtin.file:
+        src: "{{ ssl_renewal_check_remote_key_file }}"
+        dest: "{{ ssl_renewal_check_remote_key_dir }}/localhost.key"
+        state: link
+
+- name: Generate a new CSR
+  become: true
+  community.crypto.openssl_csr:
+    path: "{{ ssl_renewal_check_remote_csr_file }}"
+    privatekey_path: "{{ ssl_renewal_check_remote_key_file }}"
+    country_name: "{{ ssl_renewal_check_csr_country_name }}"
+    state_or_province_name: "{{ ssl_renewal_check_csr_state_or_province_name }}"
+    locality_name: "{{ ssl_renewal_check_csr_locality_name }}"
+    organization_name: "{{ ssl_renewal_check_csr_organization_name }}"
+    organizational_unit_name: "{{ ssl_renewal_check_csr_organizational_unit_name }}"
+    email_address: "{{ ssl_renewal_check_csr_email_address }}"
+    common_name: "{{ ansible_fqdn }}"
+    subject_alt_name: "DNS:{{ ansible_fqdn }},DNS:{{ ansible_hostname }}"
+    mode: '0644'
+
+- name: Fetch CSR to control node
+  ansible.builtin.fetch:
+    src: "{{ ssl_renewal_check_remote_csr_file }}"
+    dest: "{{ ssl_renewal_check_local_output_dir }}/{{ ssl_renewal_check_local_csr }}"
+    flat: true

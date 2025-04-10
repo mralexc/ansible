@@ -1,0 +1,14 @@
+---
+# Run on local WSL instance
+- name: Check localhost facts for WSL environment
+  ansible.builtin.setup:
+    gather_subset: env
+  delegate_to: localhost
+  run_once: true
+
+- name: Fail if control node is not WSL
+  ansible.builtin.fail:
+    msg: "This playbook needs to run on a WSL instance. WSL Env: {{ ansible_env.WSL_DISTRO_NAME }}"
+  when: ansible_env.WSL_DISTRO_NAME is not defined
+  delegate_to: localhost
+  run_once: true

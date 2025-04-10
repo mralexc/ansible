@@ -1,0 +1,14 @@
+---
+# tasks file for ssl_check_renewal
+
+- name: Import WSL Check for localhost
+  ansible.builtin.import_tasks: wsl_check.yml
+
+- name: Include remote host SSL checks and generation steps
+  ansible.builtin.include_tasks: ssl_req_check.yml
+
+- name: Include certreq tasks for localhost
+  ansible.builtin.include_tasks: certreq.yml
+
+- name: Include SSL deployment tasks
+  ansible.builtin.include_tasks: deploy_certs.yml

@@ -1,0 +1,15 @@
+---
+# Run on local WSL instance
+- name: Check if certificate file exists on control node
+  ansible.builtin.stat:
+    path: "{{ ssl_renewal_check_local_output_dir }}/{{ ssl_renewal_check_local_cer }}"
+  register: cert_exists_locally
+  delegate_to: localhost
+
+- name: Submit CSR to Windows CA via certreq (run on control node)
+  ansible.builtin.command:
+    chdir: "{{ ssl_renewal_check_local_output_dir }}"
+    cmd: "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"certreq -submit -config '{{ ssl_renewal_check_ca_config }}' -attrib 'CertificateTemplate:{{ ssl_renewal_check_cert_template }}' '{{ ssl_renewal_check_local_csr }}' '{{ ssl_renewal_check_local_cer }}'\"" # noqa yaml[line-length]
+  register: certreq_result
+  when: not cert_exists_locally.stat.exists
+  delegate_to: localhost

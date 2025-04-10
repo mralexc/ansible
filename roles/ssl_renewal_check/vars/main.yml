@@ -1,0 +1,26 @@
+---
+# vars file for ssl_check_renewal
+ssl_renewal_check_remote_cert_dir: /etc/pki/tls/certs
+ssl_renewal_check_remote_key_dir: /etc/pki/tls/private
+ssl_renewal_check_remote_csr_dir: /etc/pki/tls
+ssl_renewal_check_remote_key_file: "{{ remote_key_dir }}/{{ ansible_hostname }}.{{ domain }}.key"
+ssl_renewal_check_remote_csr_file: "{{ remote_csr_dir }}/{{ ansible_hostname }}.{{ domain }}.csr"
+ssl_renewal_check_remote_cert_file: "{{ remote_cert_dir }}/{{ ansible_hostname }}.{{ domain }}.crt"
+
+ssl_renewal_check_local_output_dir: "{{ playbook_dir }}/certificates"
+ssl_renewal_check_local_csr: "{{ ansible_hostname }}/{{ ansible_hostname }}.{{ domain }}.csr"
+ssl_renewal_check_local_cer: "{{ ansible_hostname }}/{{ ansible_hostname }}.{{ domain }}.cer"
+
+# UPDATE THESE
+ssl_renewal_check_domain: YOURDOMAIN.COM
+ssl_renewal_check_ca_config: WINDOWS_CA_SERVER_FQDN\\ISSUING_CA_NAME
+ssl_renewal_check_cert_template: ISSUED_CERT_TEMPLATE_NAME
+
+# UPDATE THESE
+# CSR Vars
+ssl_renewal_check_csr_country_name: COUNTRY
+ssl_renewal_check_csr_state_or_province_name: STATE
+ssl_renewal_check_csr_locality_name: CITY
+ssl_renewal_check_csr_organization_name: ORGANIZATION
+ssl_renewal_check_csr_organizational_unit_name: ORGANIZATIONAL UNIT
+ssl_renewal_check_csr_email_address: email@org.com
