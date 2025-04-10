@@ -1,4 +1,4 @@
-ssl_check_renewal
+ssl_renewal_check
 =========
 
 Role that will allow for checking and renewal of SSL certificates. Required to
