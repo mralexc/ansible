@@ -1,0 +1,48 @@
+---
+name: Run ansible-lint on changed ansible files
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install pip and ansible-lint
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-lint
+
+      - name: Run ansible-lint on changed files
+        run: |
+          if [ "${{ github.event_name }}" "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only --diff-filter=AM ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -E '\.ya?ml$')
+          else
+            CHANGED_FILES=$(git diff --name-only --diff-filter=AM HEAD^ HEAD | grep -E '\.ya?ml$')
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No ansible files changed"
+            exit 0
+          fi
+
+          echo "Running ansible-lint on:"
+          echo "$CHANGED_FILES"
+          ansible-lint $CHANGED_FILES
