@@ -22,7 +22,7 @@
         valid_at:
           point_1: "+90d"
       register: expiration_result
-  
+
     - name: Check if SSL certificate is linked to localhost.crt on remote host
       ansible.builtin.file:
         src: "{{ ssl_renewal_check_remote_cert_file }}"
